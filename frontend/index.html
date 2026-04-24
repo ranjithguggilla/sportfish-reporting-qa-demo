@@ -1,0 +1,53 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Portal Home</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+    <script src="/static/app.js"></script>
+  </head>
+  <body>
+    <div id="nav"></div>
+    <main>
+      <div id="accessBanner" class="error" style="display:none; margin-bottom: 12px;">
+        <span id="accessBannerText"></span>
+        <a id="analystQueueCta" href="/analyst/queue?role=analyst" style="display:none; margin-left: 10px;">
+          <button type="button">Go to Analyst Queue</button>
+        </a>
+      </div>
+      <h3>Workflow Prototype Overview</h3>
+      <p>
+        This public-data-safe prototype demonstrates intake, QA flagging, recapture history,
+        analyst exports, and angler contribution feedback.
+      </p>
+      <div class="grid">
+        <div class="card">
+          <strong>Angler Flow</strong>
+          <p>Submit a trip report with catches and optional tag event.</p>
+        </div>
+        <div class="card">
+          <strong>QA + Analyst Flow</strong>
+          <p>Run QA checks, filter flags, and export clean analyst views.</p>
+        </div>
+        <div class="card">
+          <strong>Contribution Feedback</strong>
+          <p>Review trip totals and tag recapture timeline by code.</p>
+        </div>
+      </div>
+    </main>
+    <script>
+      window.portal.bootNav();
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("denied") === "analyst") {
+        const banner = document.getElementById("accessBanner");
+        const bannerText = document.getElementById("accessBannerText");
+        const cta = document.getElementById("analystQueueCta");
+        banner.style.display = "block";
+        bannerText.innerText = "Analyst access is required for that page. Switch role to analyst in the top navigation and try again.";
+        if (window.portal.getRole() === "analyst") {
+          cta.style.display = "inline-block";
+        }
+      }
+    </script>
+  </body>
+</html>

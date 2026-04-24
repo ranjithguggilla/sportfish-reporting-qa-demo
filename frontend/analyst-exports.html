@@ -1,0 +1,108 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Analyst Exports</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+    <script src="/static/app.js"></script>
+  </head>
+  <body>
+    <div id="nav"></div>
+    <main>
+      <h3>Analyst Exports</h3>
+      <p>Download processed catch records and QA summary outputs.</p>
+      <div class="grid">
+        <div class="card">
+          <h4>CSV</h4>
+          <button id="downloadCsv">Download reports.csv</button>
+        </div>
+        <div class="card">
+          <h4>GeoJSON</h4>
+          <button id="downloadGeojson">Download reports.geojson</button>
+        </div>
+        <div class="card">
+          <h4>QA Summary</h4>
+          <button id="loadSummary">Load QA Summary</button>
+          <pre
+            id="summary"
+            style="
+              margin-top: 10px;
+              max-width: 100%;
+              width: 100%;
+              overflow-x: auto;
+              overflow-y: auto;
+              max-height: 240px;
+              white-space: pre-wrap;
+              word-break: break-word;
+              overflow-wrap: anywhere;
+              font-size: 0.84rem;
+              line-height: 1.3;
+              padding: 8px;
+              border-radius: 8px;
+              background: rgba(255, 255, 255, 0.85);
+              border: 1px solid #dbe7f8;
+            "
+          ></pre>
+        </div>
+      </div>
+      <p id="exportError" class="error" style="display:none"></p>
+    </main>
+    <script>
+      window.portal.bootNav();
+      const errorEl = document.getElementById("exportError");
+      const showError = (msg) => {
+        errorEl.style.display = "block";
+        errorEl.innerText = msg;
+      };
+      const clearError = () => {
+        errorEl.style.display = "none";
+        errorEl.innerText = "";
+      };
+
+      async function downloadWithRole(path, filename) {
+        clearError();
+        try {
+          const res = await fetch(path, {
+            headers: {
+              "X-Role": window.portal.getRole(),
+            },
+          });
+          if (!res.ok) {
+            let msg = `Export failed (${res.status})`;
+            try {
+              const payload = await res.json();
+              msg = payload.detail || msg;
+            } catch (_) {}
+            throw new Error(msg);
+          }
+          const blob = await res.blob();
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = filename;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          URL.revokeObjectURL(url);
+        } catch (err) {
+          showError(err.message);
+        }
+      }
+
+      document.getElementById("downloadCsv").onclick = () =>
+        downloadWithRole("/api/v1/exports/reports.csv", "reports.csv");
+      document.getElementById("downloadGeojson").onclick = () =>
+        downloadWithRole("/api/v1/exports/reports.geojson", "reports.geojson");
+
+      document.getElementById("loadSummary").onclick = async () => {
+        clearError();
+        try {
+          const data = await window.portal.getJson("/api/v1/exports/qa-summary.json");
+          document.getElementById("summary").innerText = JSON.stringify(data, null, 2);
+        } catch (err) {
+          showError(err.message);
+        }
+      };
+    </script>
+  </body>
+</html>

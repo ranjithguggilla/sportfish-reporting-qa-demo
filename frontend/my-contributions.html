@@ -1,0 +1,140 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>My Contributions</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+    <script src="/static/app.js"></script>
+  </head>
+  <body>
+    <div id="nav"></div>
+    <main>
+      <h3>Angler Contribution View</h3>
+      <div class="controls">
+        <label>Trip ID</label>
+        <input id="tripId" placeholder="t-0001" />
+        <label>Species Filter</label>
+        <select id="speciesFilter"><option value="">All</option></select>
+        <label><input type="checkbox" id="showCatches" checked /> Catches</label>
+        <label><input type="checkbox" id="showTags" checked /> Tags</label>
+        <label><input type="checkbox" id="showFlags" checked /> Flags</label>
+        <button id="loadBtn">Load Trip</button>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card">
+          <span class="stat-label">Catch Records</span>
+          <span class="stat-value" id="statCatchRecords">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Total Fish</span>
+          <span class="stat-value" id="statFishCount">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Tag Events</span>
+          <span class="stat-value" id="statTagEvents">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Flagged Records</span>
+          <span class="stat-value" id="statFlagged">0</span>
+        </div>
+      </div>
+      <p id="impact"></p>
+      <h4>Map Footprint (demo)</h4>
+      <svg id="map" width="760" height="260" style="border:1px solid #dbe4ef;background:#eef5fb"></svg>
+      <h4>Trip Event Timeline</h4>
+      <ul id="timeline"></ul>
+      <table id="catchTable">
+        <thead><tr><th>Catch ID</th><th>Species</th><th>Count</th><th>Length(cm)</th><th>Lat</th><th>Lon</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </main>
+    <script>
+      window.portal.bootNav();
+      const speciesFilter = document.getElementById("speciesFilter");
+      let currentTrip = "";
+
+      async function loadSpeciesOptions() {
+        const demo = await window.portal.getJson("/api/v1/demo/ids");
+        speciesFilter.innerHTML = '<option value="">All</option>' + (demo.speciesCodes || [])
+          .map((s) => `<option value="${s}">${s}</option>`)
+          .join("");
+        if (demo.sampleTripId) {
+          document.getElementById("tripId").value = demo.sampleTripId;
+        }
+      }
+
+      async function renderTrip() {
+        const id = document.getElementById("tripId").value.trim();
+        if (!id) return;
+        currentTrip = id;
+        const data = await window.portal.getJson(`/api/v1/trips/${id}`);
+        const layerData = await window.portal.getJson(
+          `/api/v1/trips/${id}/layers?species=${encodeURIComponent(speciesFilter.value)}&includeFlags=${showFlags.checked}&includeTags=${showTags.checked}`
+        );
+        const totalCatch = data.catches.reduce((a, c) => a + c.count, 0);
+        const flaggedCount = (layerData.flags || []).length;
+        document.getElementById("impact").innerText =
+          `You contributed ${data.catches.length} catch records (${totalCatch} fish) and ${data.tagReports.length} tag events. This supports data-quality and recapture visibility for management workflows.`;
+        window.portal.animateNumber(document.getElementById("statCatchRecords"), data.catches.length);
+        window.portal.animateNumber(document.getElementById("statFishCount"), totalCatch);
+        window.portal.animateNumber(document.getElementById("statTagEvents"), data.tagReports.length);
+        window.portal.animateNumber(document.getElementById("statFlagged"), flaggedCount);
+        const tbody = document.querySelector("#catchTable tbody");
+        tbody.innerHTML = "";
+        const timeline = document.getElementById("timeline");
+        timeline.innerHTML = "";
+        const map = document.getElementById("map");
+        map.innerHTML = "";
+        const flaggedCatchIds = new Set((layerData.flags || []).map((f) => f.record_id));
+        if (showCatches.checked) {
+          for (const c of layerData.catches) {
+            const isFlagged = flaggedCatchIds.has(c.catch_id);
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td>${c.catch_id}</td><td>${c.species_code}</td><td>${c.count}</td><td>${c.avg_length_cm}</td><td>${c.catch_lat}</td><td>${c.catch_lon}</td>`;
+            tbody.appendChild(tr);
+            const li = document.createElement("li");
+            li.textContent = `${c.catch_time} - ${c.species_code} (${c.count})${isFlagged ? " [FLAGGED]" : ""}`;
+            timeline.appendChild(li);
+            const x = ((Number(c.catch_lon) + 98) / 3) * 760;
+            const y = (1 - (Number(c.catch_lat) - 25.5) / 3.5) * 260;
+            const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            dot.setAttribute("cx", x.toString());
+            dot.setAttribute("cy", y.toString());
+            dot.setAttribute("r", isFlagged ? "6" : "4");
+            dot.setAttribute("fill", isFlagged ? "#b00020" : "#0f2f52");
+            map.appendChild(dot);
+          }
+        }
+        if (showTags.checked) {
+          for (const t of layerData.tags) {
+            const li = document.createElement("li");
+            li.textContent = `${t.event_datetime} - tag ${t.event_type} (${t.species_code})`;
+            timeline.appendChild(li);
+            const x = ((Number(t.event_lon) + 98) / 3) * 760;
+            const y = (1 - (Number(t.event_lat) - 25.5) / 3.5) * 260;
+            const marker = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            marker.setAttribute("x", (x - 3).toString());
+            marker.setAttribute("y", (y - 3).toString());
+            marker.setAttribute("width", "6");
+            marker.setAttribute("height", "6");
+            marker.setAttribute("fill", "#2a7f3f");
+            map.appendChild(marker);
+          }
+        }
+      }
+
+      document.getElementById("loadBtn").onclick = renderTrip;
+      document.querySelectorAll("#speciesFilter,#showCatches,#showTags,#showFlags").forEach((el) => {
+        el.onchange = () => {
+          if (currentTrip) renderTrip();
+        };
+      });
+
+      loadSpeciesOptions().then(() => {
+        if (document.getElementById("tripId").value) {
+          renderTrip();
+        }
+      });
+    </script>
+  </body>
+</html>

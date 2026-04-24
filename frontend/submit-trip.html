@@ -1,0 +1,207 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Submit Trip</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+    <script src="/static/app.js"></script>
+  </head>
+  <body>
+    <div id="nav"></div>
+    <main>
+      <h3>Submit Trip Report</h3>
+      <div class="controls">
+        <button id="loadDemo" type="button">Load Demo Values</button>
+      </div>
+      <form id="tripForm">
+        <div class="grid">
+          <div><label>Trip ID</label><input id="tripId" required /></div>
+          <div><label>Angler ID</label><input id="anglerId" required /></div>
+          <div><label>Trip Date</label><input id="tripDate" type="date" required /></div>
+          <div><label>Launch Site</label><input id="launchSite" required /></div>
+          <div><label>Start Time</label><input id="startTime" type="time" required /></div>
+          <div><label>End Time</label><input id="endTime" type="time" required /></div>
+          <div>
+            <label>Target Species (comma-separated)</label>
+            <input id="targetSpecies" placeholder="RED_SNAPPER,COBIA" required />
+          </div>
+          <div><label>Consent Version</label><input id="consentVersion" value="v1" required /></div>
+        </div>
+        <button type="submit">Create Trip</button>
+      </form>
+
+      <h4>Add Catch</h4>
+      <form id="catchForm">
+        <div class="grid">
+          <input id="catchId" placeholder="Catch ID" required />
+          <input id="catchTripId" placeholder="Trip ID" required />
+          <input id="speciesCode" placeholder="Species Code" required />
+          <input id="count" type="number" placeholder="Count" required />
+          <input id="keptCount" type="number" placeholder="Kept Count" required />
+          <input id="releasedCount" type="number" placeholder="Released Count" required />
+          <input id="avgLengthCm" type="number" step="0.1" placeholder="Avg Length (cm)" required />
+          <input id="catchLat" type="number" step="0.00001" placeholder="Latitude" required />
+          <input id="catchLon" type="number" step="0.00001" placeholder="Longitude" required />
+          <input id="catchTime" type="time" required />
+        </div>
+        <button type="submit">Create Catch</button>
+      </form>
+
+      <h4>Optional Tag Report</h4>
+      <form id="tagForm">
+        <div class="grid">
+          <input id="tagReportId" placeholder="Tag Report ID" required />
+          <input id="tagTripId" placeholder="Trip ID" required />
+          <input id="tagCode" placeholder="Tag Code" required />
+          <select id="eventType">
+            <option value="tagged">tagged</option>
+            <option value="recaptured">recaptured</option>
+          </select>
+          <input id="tagSpeciesCode" placeholder="Species Code" required />
+          <input id="eventDateTime" type="datetime-local" required />
+          <input id="eventLat" type="number" step="0.00001" placeholder="Latitude" required />
+          <input id="eventLon" type="number" step="0.00001" placeholder="Longitude" required />
+          <input id="condition" placeholder="Condition" required />
+        </div>
+        <button type="submit">Create Tag Report</button>
+      </form>
+
+      <p id="status" class="notice"></p>
+      <p id="error" class="error" style="display:none"></p>
+    </main>
+    <script>
+      window.portal.bootNav();
+      const statusEl = document.getElementById("status");
+      const errorEl = document.getElementById("error");
+      const showError = (msg) => {
+        statusEl.innerText = "";
+        errorEl.style.display = "block";
+        errorEl.innerText = msg;
+      };
+      const clearError = () => {
+        errorEl.style.display = "none";
+        errorEl.innerText = "";
+      };
+
+      document.getElementById("loadDemo").onclick = async () => {
+        const demo = await window.portal.getJson("/api/v1/demo/ids");
+        const seed = Date.now().toString().slice(-6);
+        tripId.value = `t-manual-${seed}`;
+        anglerId.value = "a-001";
+        tripDate.value = "2025-11-01";
+        launchSite.value = "BobHall";
+        startTime.value = "06:00";
+        endTime.value = "12:00";
+        targetSpecies.value = "RED_SNAPPER,COBIA";
+        consentVersion.value = "v1";
+        catchId.value = `c-manual-${seed}`;
+        catchTripId.value = tripId.value;
+        speciesCode.value = demo.speciesCodes?.[0] || "RED_SNAPPER";
+        count.value = "2";
+        keptCount.value = "1";
+        releasedCount.value = "1";
+        avgLengthCm.value = "45";
+        catchLat.value = "27.5";
+        catchLon.value = "-96.8";
+        catchTime.value = "08:30";
+        tagReportId.value = `tr-manual-${seed}`;
+        tagTripId.value = tripId.value;
+        tagCode.value = `TAGM${seed}`;
+        eventType.value = "tagged";
+        tagSpeciesCode.value = demo.speciesCodes?.[0] || "RED_SNAPPER";
+        eventDateTime.value = "2025-11-01T08:45";
+        eventLat.value = "27.5";
+        eventLon.value = "-96.8";
+        condition.value = "good";
+        statusEl.innerText = "Demo values loaded.";
+      };
+
+      document.getElementById("tripForm").onsubmit = async (e) => {
+        e.preventDefault();
+        try {
+          clearError();
+          const speciesParsed = window.portal.parseSpeciesList(targetSpecies.value);
+          if (speciesParsed.list.length === 0) throw new Error("Target species is required.");
+          if (speciesParsed.invalid.length) {
+            throw new Error(`Invalid species code(s): ${speciesParsed.invalid.join(", ")}`);
+          }
+          if (endTime.value <= startTime.value) {
+            throw new Error("End time must be later than start time.");
+          }
+          const payload = {
+            tripId: tripId.value,
+            anglerId: anglerId.value,
+            tripDate: tripDate.value,
+            launchSite: launchSite.value,
+            startTime: startTime.value,
+            endTime: endTime.value,
+            targetSpecies: speciesParsed.list,
+            consentVersion: consentVersion.value,
+          };
+          const data = await window.portal.getJson("/api/v1/trips", { method: "POST", body: JSON.stringify(payload) });
+          clearError();
+          statusEl.innerText = `${data.message}. Next: add catches tied to this trip ID.`;
+        } catch (err) {
+          showError(err.message);
+        }
+      };
+
+      document.getElementById("catchForm").onsubmit = async (e) => {
+        e.preventDefault();
+        try {
+          clearError();
+          if (Number(keptCount.value) + Number(releasedCount.value) !== Number(count.value)) {
+            throw new Error("Kept + Released must equal Count.");
+          }
+          if (Number(catchLat.value) < -90 || Number(catchLat.value) > 90 || Number(catchLon.value) < -180 || Number(catchLon.value) > 180) {
+            throw new Error("Latitude/Longitude must be within valid geographic ranges.");
+          }
+          const payload = {
+            catchId: catchId.value,
+            tripId: catchTripId.value,
+            speciesCode: speciesCode.value.toUpperCase(),
+            count: Number(count.value),
+            keptCount: Number(keptCount.value),
+            releasedCount: Number(releasedCount.value),
+            avgLengthCm: Number(avgLengthCm.value),
+            catchLat: Number(catchLat.value),
+            catchLon: Number(catchLon.value),
+            catchTime: catchTime.value,
+          };
+          const data = await window.portal.getJson("/api/v1/catches", { method: "POST", body: JSON.stringify(payload) });
+          clearError();
+          statusEl.innerText = `${data.message}. You can add another catch or submit a tag report.`;
+        } catch (err) {
+          showError(err.message);
+        }
+      };
+
+      document.getElementById("tagForm").onsubmit = async (e) => {
+        e.preventDefault();
+        try {
+          clearError();
+          if (!eventDateTime.value) throw new Error("Event date/time is required.");
+          if (Number(eventLat.value) < -90 || Number(eventLat.value) > 90 || Number(eventLon.value) < -180 || Number(eventLon.value) > 180) {
+            throw new Error("Tag event coordinates are outside valid ranges.");
+          }
+          const payload = {
+            tagReportId: tagReportId.value,
+            tripId: tagTripId.value,
+            tagCode: tagCode.value,
+            eventType: eventType.value,
+            speciesCode: tagSpeciesCode.value.toUpperCase(),
+            eventDateTime: new Date(eventDateTime.value).toISOString(),
+            eventLat: Number(eventLat.value),
+            eventLon: Number(eventLon.value),
+            condition: condition.value,
+          };
+          const data = await window.portal.getJson("/api/v1/tag-reports", { method: "POST", body: JSON.stringify(payload) });
+          clearError();
+          statusEl.innerText = `${data.message}. Trip record is now ready for QA review.`;
+        } catch (err) {
+          showError(err.message);
+        }
+      };
+    </script>
+  </body>
+</html>

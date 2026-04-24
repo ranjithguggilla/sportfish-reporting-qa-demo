@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Recapture Timeline</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+    <script src="/static/app.js"></script>
+  </head>
+  <body>
+    <div id="nav"></div>
+    <main>
+      <h3>Recapture Timeline</h3>
+      <input id="tagCode" placeholder="TAG10009" />
+      <button id="load">Load History</button>
+      <ul id="timeline"></ul>
+      <p id="intervals"></p>
+    </main>
+    <script>
+      window.portal.bootNav();
+      window.portal.getJson("/api/v1/demo/ids").then((demo) => {
+        if (demo.sampleTagCode) document.getElementById("tagCode").value = demo.sampleTagCode;
+      });
+      document.getElementById("load").onclick = async () => {
+        const tag = document.getElementById("tagCode").value.trim();
+        const data = await window.portal.getJson(`/api/v1/tag-reports/${tag}/history`);
+        const list = document.getElementById("timeline");
+        list.innerHTML = "";
+        let intervals = [];
+        data.history.forEach((h) => {
+          const li = document.createElement("li");
+          li.textContent = `${h.event_datetime} | ${h.event_type} | ${h.species_code} @ (${h.event_lat}, ${h.event_lon})`;
+          list.appendChild(li);
+        });
+        for (let i = 1; i < data.history.length; i++) {
+          const prev = new Date(data.history[i - 1].event_datetime);
+          const cur = new Date(data.history[i].event_datetime);
+          const days = Math.round((cur - prev) / (1000 * 60 * 60 * 24));
+          intervals.push(days);
+        }
+        document.getElementById("intervals").textContent = intervals.length
+          ? `Relative recapture intervals (days): ${intervals.join(", ")}`
+          : "No interval metrics available yet.";
+      };
+    </script>
+  </body>
+</html>

@@ -1,0 +1,76 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Analyst Queue</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+    <script src="/static/app.js"></script>
+  </head>
+  <body>
+    <div id="nav"></div>
+    <main>
+      <h3>QA Analyst Queue</h3>
+      <div class="stats-row">
+        <div class="stat-card"><span class="stat-label">Visible Flags</span><span class="stat-value" id="statVisibleFlags">0</span></div>
+        <div class="stat-card"><span class="stat-label">High Severity</span><span class="stat-value" id="statHighSeverity">0</span></div>
+        <div class="stat-card"><span class="stat-label">Open Flags</span><span class="stat-value" id="statOpenFlags">0</span></div>
+      </div>
+      <button id="runQa">Run QA</button>
+      <label>Status</label>
+      <select id="statusFilter">
+        <option value="">All</option>
+        <option value="OPEN">OPEN</option>
+        <option value="REVIEWED">REVIEWED</option>
+        <option value="ESCALATED">ESCALATED</option>
+        <option value="DISMISSED">DISMISSED</option>
+      </select>
+      <button id="refresh">Refresh Flags</button>
+
+      <table>
+        <thead>
+          <tr><th>Flag ID</th><th>Record</th><th>Type</th><th>Severity</th><th>Score</th><th>Status</th><th>Action</th></tr>
+        </thead>
+        <tbody id="flagRows"></tbody>
+      </table>
+    </main>
+    <script>
+      window.portal.bootNav();
+      async function loadFlags() {
+        try {
+          const status = document.getElementById("statusFilter").value;
+          const qs = status ? `?status=${encodeURIComponent(status)}` : "";
+          const data = await window.portal.getJson(`/api/v1/qa/flags${qs}`);
+          const tbody = document.getElementById("flagRows");
+          tbody.innerHTML = "";
+          data.items.forEach((f) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td>${f.flag_id}</td><td><a href="/analyst/record/${f.record_type}/${f.record_id}?role=analyst">${f.record_type}:${f.record_id}</a></td><td>${f.flag_type}</td><td>${f.severity}</td><td>${f.score}</td><td>${f.status}</td><td><button data-id="${f.flag_id}" data-status="REVIEWED">Review</button> <button data-id="${f.flag_id}" data-status="ESCALATED">Escalate</button> <button data-id="${f.flag_id}" data-status="DISMISSED">Dismiss</button></td>`;
+            tbody.appendChild(tr);
+          });
+          tbody.querySelectorAll("button").forEach((b) => {
+            b.onclick = async () => {
+              await window.portal.getJson(`/api/v1/qa/flags/${b.dataset.id}`, {
+                method: "PATCH",
+                body: JSON.stringify({ status: b.dataset.status, notes: "Updated from analyst queue" }),
+              });
+              loadFlags();
+            };
+          });
+          const high = data.items.filter((f) => f.severity === "HIGH").length;
+          const open = data.items.filter((f) => f.status === "OPEN").length;
+          window.portal.animateNumber(document.getElementById("statVisibleFlags"), data.items.length);
+          window.portal.animateNumber(document.getElementById("statHighSeverity"), high);
+          window.portal.animateNumber(document.getElementById("statOpenFlags"), open);
+        } catch (err) {
+          alert(`Unable to load queue: ${err.message}`);
+        }
+      }
+      document.getElementById("runQa").onclick = async () => {
+        await window.portal.getJson("/api/v1/qa/run", { method: "POST" });
+        loadFlags();
+      };
+      document.getElementById("refresh").onclick = loadFlags;
+      loadFlags();
+    </script>
+  </body>
+</html>

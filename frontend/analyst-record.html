@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Analyst Record Detail</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+    <script src="/static/app.js"></script>
+  </head>
+  <body>
+    <div id="nav"></div>
+    <main>
+      <h3>Record Detail</h3>
+      <div class="grid">
+        <input id="recordType" placeholder="catch | trip | tag_report" />
+        <input id="recordId" placeholder="record id" />
+      </div>
+      <button id="load">Load Record</button>
+      <pre id="result"></pre>
+    </main>
+    <script>
+      window.portal.bootNav();
+      document.getElementById("load").onclick = async () => {
+        const recordType = document.getElementById("recordType").value.trim();
+        const recordId = document.getElementById("recordId").value.trim();
+        const data = await window.portal.getJson(`/api/v1/records/${recordType}/${recordId}`);
+        document.getElementById("result").innerText = JSON.stringify(data, null, 2);
+      };
+    </script>
+  </body>
+</html>
