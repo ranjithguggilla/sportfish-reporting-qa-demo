@@ -2,7 +2,8 @@
 
 Sportfish trip reporting QA demo — a small website where people submit fishing trips and optional tag notes, staff review flagged items, and downloads go out as CSV or GeoJSON (fake sample data).
 
-The on-screen product name in the demo UI remains **Reporting and Tagging Intelligence Portal**
+The on-screen product name in the demo UI remains **Reporting and Tagging Intelligence Portal** so screenshots and screen recordings stay consistent.
+
 ## Who this is for (60-second read)
 
 If you skim GitHub repos fast, here is the point of this one:
@@ -14,19 +15,6 @@ If you skim GitHub repos fast, here is the point of this one:
 | How do you prove it quickly? | Screenshots + GIF + setup steps below. |
 
 **Printable one-pager (three panels):** open [`docs/reviewer-one-pager.html`](docs/reviewer-one-pager.html) in a browser → Print → Save as PDF.
-
-## Packaging notes (GitHub profile)
-
-Recommended public repo name (short + clear):
-
-`sportfish-reporting-qa-demo`
-
-Suggested GitHub bio line examples:
-
-- "Research-style data tools · trip reporting demos · QA + GIS-friendly exports"
-- "Demo apps for outdoor reporting workflows (QC, maps, CSV/GeoJSON)"
-
-Keep claims practical: workflow software that supports intake + review + downloads—not stock estimates.
 
 ## What this helps with
 
