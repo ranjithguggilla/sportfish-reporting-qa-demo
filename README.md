@@ -2,8 +2,7 @@
 
 Sportfish trip reporting QA demo — a small website where people submit fishing trips and optional tag notes, staff review flagged items, and downloads go out as CSV or GeoJSON (fake sample data).
 
-The on-screen product name in the demo UI remains **Reporting and Tagging Intelligence Portal** so screenshots and screen recordings stay consistent.
-
+The on-screen product name in the demo UI remains **Reporting and Tagging Intelligence Portal**
 ## Who this is for (60-second read)
 
 If you skim GitHub repos fast, here is the point of this one:
