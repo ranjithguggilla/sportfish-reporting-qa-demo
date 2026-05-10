@@ -1,8 +1,41 @@
 # sportfish-reporting-qa-demo
 
-Sportfish trip reporting QA demo — a small website where people submit fishing trips and optional tag notes, staff review flagged items, and downloads go out as CSV or GeoJSON (fake sample data).
+![Python 3.11+](https://img.shields.io/badge/python-3.11+-3776AB?style=flat&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat&logo=fastapi&logoColor=white)
+
+Sportfish reporting QA workflow demo — data intake, validation, structured export (public-data-safe).
 
 The on-screen product name in the demo UI remains **Reporting and Tagging Intelligence Portal** so screenshots and screen recordings stay consistent.
+
+## Demo media
+
+End-to-end UI built with **FastAPI + SQLite + static HTML** (`uvicorn api.main:app`). Demo uses **synthetic data only**.
+
+### Walkthrough GIF
+
+Full portal walkthrough (**`assets/gif/portal-end-to-end.gif`**).
+
+![Reporting and Tagging Intelligence Portal — walkthrough](assets/gif/portal-end-to-end.gif)
+
+### Screenshots
+
+<details>
+<summary><strong>Expand: 6 dashboard screenshots</strong> (home → submit → contributions → QA → exports → access banner)</summary>
+
+| Screen | Preview |
+|--------|---------|
+| Home / overview | ![Home overview](assets/screenshots/01-home-overview.png) |
+| Submit trip flow | ![Submit trip](assets/screenshots/02-submit-trip-flow.png) |
+| My contributions (map + timeline) | ![Contributions](assets/screenshots/03-contributions-map-timeline.png) |
+| QA analyst queue | ![QA queue](assets/screenshots/04-qa-analyst-queue.png) |
+| Analyst exports | ![Analyst exports](assets/screenshots/05-analyst-exports.png) |
+| Access / role banner | ![Access note](assets/screenshots/06-access-denied-banner.png) |
+
+</details>
+
+**Source recording:** [`assets/Source/portal-demo.mp4`](assets/Source/portal-demo.mp4)
+
+**Regenerating GIFs / ffmpeg:** [`docs/artifact-finalization.md`](docs/artifact-finalization.md)
 
 ## Who this is for (60-second read)
 
@@ -12,7 +45,7 @@ If you skim GitHub repos fast, here is the point of this one:
 | --- | --- |
 | What problem does it solve? | Messy volunteer reports slow teams down—this prototype standardizes intake and highlights likely issues early. |
 | What did you build? | A working web demo with reporting forms, QA queue, downloads, and a participant summary view (fake data). |
-| How do you prove it quickly? | Screenshots + GIF + setup steps below. |
+| How do you prove it quickly? | GIF + screenshots above + setup steps below. |
 
 **Printable one-pager (three panels):** open [`docs/reviewer-one-pager.html`](docs/reviewer-one-pager.html) in a browser → Print → Save as PDF.
 
@@ -124,19 +157,6 @@ See [`docs/data-provenance.md`](docs/data-provenance.md) for what "fake data" me
 ## Synthetic dataset (included)
 
 Running `python3 api/seed_data.py` fills `data/mock/` with repeatable sample trips, catches, tags, plus a SQLite file for local runs.
-
-## Screenshots & screen recording
-
-Checklist and ffmpeg tips: [`docs/artifact-finalization.md`](docs/artifact-finalization.md)
-
-- **Screenshots folder:** [`assets/screenshots/`](assets/screenshots/)
-  - [Home](assets/screenshots/01-home-overview.png)
-  - [Submit Trip](assets/screenshots/02-submit-trip-flow.png)
-  - [Contributions](assets/screenshots/03-contributions-map-timeline.png)
-  - [QA Queue](assets/screenshots/04-qa-analyst-queue.png)
-  - [Exports](assets/screenshots/05-analyst-exports.png)
-  - [Access note](assets/screenshots/06-access-denied-banner.png)
-- **Walkthrough GIF:** [`assets/gif/portal-end-to-end.gif`](assets/gif/portal-end-to-end.gif) (source recording: `assets/Source/portal-demo.mp4`)
 
 ## Honest limits
 
