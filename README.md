@@ -7,6 +7,12 @@ Sportfish reporting QA workflow demo — data intake, validation, structured exp
 
 The on-screen product name in the demo UI remains **Reporting and Tagging Intelligence Portal** so screenshots and screen recordings stay consistent.
 
+## Data & limitations
+
+- **Public-data-safe:** **Synthetic demo data only**—see [`docs/data-provenance.md`](docs/data-provenance.md).
+- **No internal HRI/CSSC data:** This repository does **not** use confidential, restricted, or internal datasets from HRI, CSSC, or partner fishery programs.
+- **Prototype:** Not biological inference, stock assessment, or management-grade output—see **Honest limits** at the end of this README.
+
 ## Demo media
 
 End-to-end UI built with **FastAPI + SQLite + static HTML** (`uvicorn api.main:app`). Demo uses **synthetic data only**.
@@ -57,6 +63,11 @@ If you skim GitHub repos fast, here is the point of this one:
 - **Clear participant view:** totals, a simple map footprint, timelines, and tag histories.
 
 This demo uses **fake data only**. It is not measuring fish populations or predicting outcomes.
+
+## How this could support research workflows
+
+- **Workflow prototyping:** Demonstrates intake → validation → QA queue → structured export using repeatable **synthetic** seeds (`api/seed_data.py`).
+- **Handoff examples:** CSV and GeoJSON export routes show how reviewable tabular and spatial packages could look—without claiming real-world catch statistics.
 
 ## Smart helpers (optional)
 
@@ -157,6 +168,17 @@ See [`docs/data-provenance.md`](docs/data-provenance.md) for what "fake data" me
 ## Synthetic dataset (included)
 
 Running `python3 api/seed_data.py` fills `data/mock/` with repeatable sample trips, catches, tags, plus a SQLite file for local runs.
+
+## Example outputs
+
+| Output | Notes |
+|--------|--------|
+| **CSV** | `GET /api/v1/exports/reports.csv` (analyst role) — tabular review package |
+| **GeoJSON** | `GET /api/v1/exports/reports.geojson` (analyst role) — map-friendly features |
+| **QA summary JSON** | `GET /api/v1/exports/qa-summary.json` (analyst role) |
+| **Local DB** | `data/mock/portal.db` — created when you run `api/seed_data.py` |
+
+Use the **Analyst** role in the UI (or `x-role: analyst` on API calls) to access export endpoints.
 
 ## Honest limits
 
